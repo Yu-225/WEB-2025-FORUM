@@ -6,6 +6,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>{% block title %}БочкаМеду{% endblock %}</title>
 
+  <link rel="manifest" href="{% static 'manifest.json' %}">
+  <meta name="theme-color" content="#ff7a18">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
@@ -29,6 +32,15 @@
   <meta name="apple-mobile-web-app-title" content="BarrelOfHoney" />
   <link rel="manifest" href="{% static '/favicon/site.webmanifest' %}" />
 </head>
+
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/static/js/sw.js');
+  });
+}
+</script>
 
 
 <body class="theme-light">
