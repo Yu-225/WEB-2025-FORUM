@@ -1,0 +1,24 @@
+{# forum/_post_form.html #}
+<div class="card mt-3 fade-in neon-hover">
+  <div class="card-body">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <label class="form-label">Текст відповіді</label>
+    {# show field errors near editor (you can adapt this to your quill integration) #}
+    {% if form.content.errors %}
+      <div class="text-danger small">{{ form.content.errors }}</div>
+    {% endif %}
+    <textarea id="id_content" name="content" class="d-none">{{ form.content.value|default_if_none:"" }}</textarea>
+    <div class="mt-2 d-flex justify-content-between align-items-center">
+      <div id="post-indicator" style="display:none;">
+        <div class="spinner-border spinner-border-sm"></div>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary" type="submit">Відправити</button>
+        <a class="btn btn-outline-secondary" href="{{ thread.get_absolute_url }}">Скасувати</a>
+      </div>
+    </div>
+  </div>
+</div>

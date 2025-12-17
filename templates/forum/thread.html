@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% load static humanize %}
+{% block title %}{{ thread.title }} — БочкаМеду{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-12">
+    <div class="card mb-3 neon-hover">
+      <div class="card-body d-flex justify-content-between align-items-start">
+        <div>
+          <h3 class="mb-1">{{ thread.title }}</h3>
+          <div class="small text-muted">
+            Категорія: <a href="{{ thread.category.get_absolute_url }}">{{ thread.category.title }}</a>
+            • автор: <a href="{% url 'profile_view' thread.author.username %}">{{ thread.author.get_full_name|default:thread.author.username }}</a>
+            • {{ thread.updated_at|naturaltime }}
+          </div>
+        </div>
+
+        <div class="text-end">
+          {% if user.is_authenticated %}
+            {% if user == thread.author or user.is_staff %}
+              <a href="{% url 'thread_edit' thread.pk %}"
+                class="btn btn-sm btn-outline-primary me-2">
+                Редагувати тему
+              </a>
+            {% endif %}
+          {% endif %}
+          <span class="small text-muted">💬 {{ thread.posts.count }} • 👀 {{ thread.views }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- posts list -->
+    <div id="posts">
+      {% for p in posts %}
+        {% include 'forum/_post.html' with p=p %}
+      {% endfor %}
+    </div>
+
+    <!-- pagination for posts -->
+    <nav aria-label="posts pagination">
+      <ul class="pagination">
+        {% if posts.has_previous %}
+          <li class="page-item"><a href="?page={{ posts.previous_page_number }}" class="page-link">←</a></li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">Сторінка {{ posts.number }} з {{ posts.paginator.num_pages }}</span></li>
+        {% if posts.has_next %}
+          <li class="page-item"><a href="?page={{ posts.next_page_number }}" class="page-link">→</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+
+    <!-- post form (HTMX) -->
+    {% if user.is_authenticated and not thread.closed %}
+      <div class="card mt-3 fade-in neon-hover">
+        <div class="card-body">
+          <form id="post-form"
+                hx-post="{% url 'post_create_htmx' thread.pk %}"
+                hx-target="#posts"
+                hx-swap="beforeend"
+                hx-indicator="#post-indicator"
+                method="post">
+            {% csrf_token %}
+            <input type="hidden" name="current_page" value="{{ posts.number }}">
+
+            {# Quill editor root #}
+            <label class="form-label">Текст відповіді</label>
+            <div id="quill-editor" style="min-height:140px;"></div>
+
+            {# прихований textarea, яке реально відправляємо на сервер #}
+            <textarea id="id_content" name="content" class="d-none" rows="6"></textarea>
+
+            <div class="mt-2 d-flex justify-content-between align-items-center">
+              <div id="post-indicator" style="display:none;">
+                <div class="spinner-border spinner-border-sm"></div>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-primary" type="submit">Відправити</button>
+                <a class="btn btn-outline-secondary" href="{{ thread.get_absolute_url }}">Скасувати</a>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    {% elif thread.closed %}
+      <div class="alert alert-warning mt-3">Тема закрита — відповіді заборонені.</div>
+    {% else %}
+      <div class="alert alert-info mt-3">Щоб відповісти — <a href="{% url 'login' %}?next={{ request.path }}">увійди</a> або <a href="{% url 'register' %}">зареєструйся</a>.</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- HTMX — підключити ПЕРЕД Quill та перед ініціалізацією форми -->
+<script src="https://cdn.jsdelivr.net/npm/htmx.org@1.10.0"></script>
+
+<!-- Quill CSS/JS (від CDN) -->
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function () {
+  // Чекаємо, поки htmx підвантажиться (макс 2 сек)
+  await (function waitForHtmx(timeout = 2000) {
+    return new Promise(resolve => {
+      if (window.htmx) return resolve(true);
+      const t0 = Date.now();
+      const i = setInterval(() => {
+        if (window.htmx) {
+          clearInterval(i);
+          return resolve(true);
+        }
+        if (Date.now() - t0 > timeout) {
+          clearInterval(i);
+          return resolve(false);
+        }
+      }, 50);
+    });
+  })();
+
+  if (!window.htmx) {
+    console.warn('htmx не доступний: перевір підключення у base.html');
+  }
+
+  const quill = new Quill('#quill-editor', {
+    theme: 'snow',
+    placeholder: 'Напиши свою відповідь...',
+    modules: {
+      toolbar: [
+        ['bold','italic','underline'],
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        ['link']
+      ]
+    }
+  });
+
+  const form = document.getElementById('post-form');
+  if (!form) return;
+
+  form.addEventListener('submit', function (e) {
+    const ta = document.getElementById('id_content');
+    if (ta) ta.value = quill.root.innerHTML.trim();
+    if (!ta.value || ta.value.replace(/(<([^>]+)>)/gi, '').trim().length === 0) {
+      e.preventDefault();
+      alert('Текст відповіді не повинен бути порожнім.');
+      return false;
+    }
+  });
+
+  // після того, як HTMX вже вставив/замінив частину DOM
+  document.body.addEventListener('htmx:afterSwap', function (evt) {
+    const target = evt.detail && evt.detail.target;
+    if (!target) return;
+    // нас цікавить тільки вставка в #posts
+    if (target.id !== 'posts') return;
+
+    // сервер маркує тільки щойно створений пост
+    const newPost = target.querySelector('[data-new-post="true"]');
+    if (!newPost) return;
+
+    const postId = newPost.getAttribute('data-post-id');
+    const lastPage = newPost.getAttribute('data-last-page');
+
+    // очистити редактор
+    quill.root.innerHTML = '';
+
+    // плавно проскролити до поста
+    const el = document.getElementById('post-' + postId);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // оновити URL -> щоб після reload користувач залишився на сторінці з постом
+    if (lastPage) {
+      const newUrl = window.location.pathname + '?page=' + lastPage + '#post-' + postId;
+      history.replaceState({}, '', newUrl);
+    }
+
+    // прибираємо маркери, щоб не обробляти вдруге
+    newPost.removeAttribute('data-new-post');
+    newPost.removeAttribute('data-last-page');
+    newPost.removeAttribute('data-post-id');
+  });
+});
+</script>
+{% endblock %}

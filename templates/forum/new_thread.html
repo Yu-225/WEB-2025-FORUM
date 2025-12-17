@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Створити тему — БочкаМеду{% endblock %}
+
+{% block content %}
+<!-- Quill CSS (CDN) -->
+<link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+
+<div class="row gx-4">
+  <div class="col-lg-8">
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'index' %}">Головна</a></li>
+        <li class="breadcrumb-item">
+          <a href="{{ category.get_absolute_url }}">{{ category.title }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Нова тема</li>
+      </ol>
+    </nav>
+
+    <div class="card mb-4 fade-in neon-hover">
+      <div class="card-body">
+        <h4 class="card-title mb-3">Створити нову тему</h4>
+
+        <form method="post" id="new-thread-form" novalidate>
+          {% csrf_token %}
+
+          <!-- Title -->
+          <div class="mb-3">
+            <label class="form-label">Заголовок</label>
+            {{ thread_form.title }}
+            {% if thread_form.title.errors %}
+              <div class="invalid-feedback d-block">
+                {{ thread_form.title.errors.0 }}
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Category -->
+          <div class="mb-3">
+            <label class="form-label">Категорія</label>
+            {{ thread_form.category }}
+            {% if thread_form.category.errors %}
+              <div class="invalid-feedback d-block">
+                {{ thread_form.category.errors.0 }}
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Post content (Quill) -->
+          <div class="mb-3">
+            <label class="form-label">Текст теми</label>
+
+            <!-- toolbar -->
+            <div id="quill-toolbar" class="mb-2">
+              <span class="ql-formats">
+                <select class="ql-header" title="Заголовок">
+                  <option selected></option>
+                  <option value="2">H2</option>
+                </select>
+                <button class="ql-bold" title="Жирний"></button>
+                <button class="ql-italic" title="Курсив"></button>
+                <button class="ql-underline" title="Підкреслити"></button>
+                <button class="ql-list" value="ordered" title="Нумерований список"></button>
+                <button class="ql-list" value="bullet" title="Маркірований список"></button>
+                <button class="ql-blockquote" title="Цитата"></button>
+                <button class="ql-link" title="Посилання"></button>
+              </span>
+            </div>
+
+            <!-- editor container -->
+            <div id="quill-editor" class="card card-level-2 mb-2" style="min-height:200px;padding:.75rem;"></div>
+
+            {# hidden textarea that will be submitted - name must match form field on backend #}
+            <textarea name="{{ post_form.content.html_name }}" id="id_content" hidden>{{ post_form.content.value|default_if_none:"" }}</textarea>
+
+            {% if post_form.content.errors %}
+              <div class="invalid-feedback d-block">
+                {{ post_form.content.errors.0 }}
+              </div>
+            {% endif %}
+
+            <div class="form-text">Редактор збереже форматування (HTML). Сервер очищає HTML перед збереженням (bleach sanitization).</div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary" type="submit">Створити тему</button>
+            <a class="btn btn-outline-primary" href="{{ category.get_absolute_url }}">Назад</a>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <aside class="col-lg-4">
+    <div class="card mb-3 shadow-sm card-level-2">
+      <div class="card-body">
+        <h6>Порада</h6>
+        <p class="small text-muted">Використовуй зрозумілі заголовки і описуй очікуваний результат у першому пості — тоді більше шансів отримати корисну відповідь.</p>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- Quill JS (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+
+<!-- Init Quill and sync to hidden textarea -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // toolbar already present in DOM (#quill-toolbar)
+  const quill = new Quill('#quill-editor', {
+    modules: {
+      toolbar: '#quill-toolbar'
+    },
+    theme: 'snow'
+  });
+
+  // If there is initial content in textarea (e.g., on validation error), set it into quill
+  const hidden = document.getElementById('id_content');
+  if (hidden && hidden.value.trim().length > 0) {
+    try {
+      // assume server stored HTML — Quill accepts delta or HTML via clipboard
+      quill.clipboard.dangerouslyPasteHTML(hidden.value);
+    } catch (e) {
+      console.warn('Paste initial html failed:', e);
+    }
+  }
+
+  // On submit, copy HTML from Quill to textarea
+  const form = document.getElementById('new-thread-form');
+  form.addEventListener('submit', function (e) {
+    // copy HTML
+    const html = quill.root.innerHTML;
+    hidden.value = html;
+
+    // optionally basic client-side validation
+    const title = document.querySelector('[name="{{ thread_form.title.html_name }}"]');
+    if (title && title.value.trim().length < 5) {
+      e.preventDefault();
+      title.classList.add('is-invalid');
+      title.scrollIntoView({behavior: 'smooth', block: 'center'});
+      return false;
+    }
+    return true;
+  });
+});
+</script>
+
+<!-- small theme tweaks for Quill to match your variables -->
+<style>
+/* toolbar & editor theming using CSS vars from site.css */
+.ql-toolbar.ql-snow {
+  background: var(--card-bg-level-2);
+  border: 1px solid var(--bs-border-color);
+  color: var(--bs-body-color);
+}
+.ql-container.ql-snow {
+  border: 1px solid var(--bs-border-color);
+  background: var(--card-bg-level-1);
+  color: var(--bs-body-color);
+}
+.ql-editor {
+  min-height: 140px;
+  color: var(--bs-body-color);
+  font-family: inherit;
+}
+.ql-toolbar .ql-picker-label, .ql-toolbar button {
+  color: var(--bs-body-color);
+}
+.ql-toolbar .ql-picker-options { background: var(--card-bg-level-2); color: var(--bs-body-color); }
+.ql-editor a { color: var(--bs-primary); }
+</style>
+
+{% endblock %}

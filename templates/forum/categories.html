@@ -1,0 +1,33 @@
+{# templates/forum/categories.html #}
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Категорії — БочкаМеду{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Категорії</h2>
+  {% if is_admin %}
+    <a href="{% url 'admin:forum_category_add' %}" class="btn btn-sm btn-outline-primary">Додати категорію</a>
+  {% endif %}
+</div>
+
+<div class="row">
+  {% for category in categories %}
+    <div class="col-md-6 col-lg-4 mb-3 fade-in">
+      <div class="card h-100 shadow-sm neon-hover">
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title"><a href="{{ category.get_absolute_url }}">{{ category.title }}</a></h5>
+          <p class="card-text text-muted mb-2">{{ category.description|default:"Немає опису." }}</p>
+          <div class="mt-auto">
+            <a href="{{ category.get_absolute_url }}" class="stretched-link small">Переглянути теми</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12">
+      <div class="alert alert-info">Категорій ще немає.</div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Редагувати профіль — БочкаМеду{% endblock %}
+
+{% block content %}
+<div class="row gx-4">
+  <div class="col-lg-8">
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'index' %}">Головна</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'profile' %}">Профіль</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Редагувати</li>
+      </ol>
+    </nav>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    {% if user_form.errors or profile_form.errors %}
+      <div class="alert alert-danger">
+        Будь ласка, виправте помилки у формі.
+        {% for field in user_form %}
+          {% for err in field.errors %}
+            <div>{{ field.label }}: {{ err }}</div>
+          {% endfor %}
+        {% endfor %}
+        {% for field in profile_form %}
+          {% for err in field.errors %}
+            <div>{{ field.label }}: {{ err }}</div>
+          {% endfor %}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h4 class="card-title mb-3">Редагувати профіль</h4>
+
+        <form id="profile-edit-form" method="post" enctype="multipart/form-data" action="{% url 'profile_edit' %}">
+          {% csrf_token %}
+          <div class="row">
+            <div class="col-md-3 text-center">
+              {% if request.user.profile.avatar %}
+                <img id="avatar-preview" src="{{ request.user.profile.avatar.url }}" alt="avatar" class="rounded-circle mb-3" width="120" height="120">
+              {% else %}
+                <img id="avatar-preview" src="{% static 'img/avatar-placeholder.png' %}" alt="avatar" class="rounded-circle mb-3" width="120" height="120">
+              {% endif %}
+
+              <div class="mb-2">
+                {# Render profile_form.avatar input (file) #}
+                {{ profile_form.avatar }}
+              </div>
+              <div class="small text-muted">Рекомендовано 200×200, PNG/JPG</div>
+            </div>
+
+            <div class="col-md-9">
+              <h6>Акаунт</h6>
+              <div class="mb-3">
+                <label class="form-label">Логін</label>
+                {{ user_form.username }}
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Email</label>
+                {{ user_form.email }}
+              </div>
+
+              <h6 class="mt-3">Профіль</h6>
+              <div class="mb-3">
+                <label for="id_bio" class="form-label">Біо</label>
+                {{ profile_form.bio }}
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Локація</label>
+                  {{ profile_form.location }}
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Веб-сайт</label>
+                  {{ profile_form.website }}
+                </div>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button id="btn-save-profile" type="submit" class="btn btn-primary">Зберегти</button>
+                <a href="{% url 'profile' %}" class="btn btn-outline-secondary">Скасувати</a>
+              </div>
+
+              <div id="save-feedback" class="mt-3" style="display:none;">
+                <div class="alert alert-success">Профіль збережено. Переадресація…</div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <aside class="col-lg-4">
+    <div class="card mb-3 shadow-sm">
+      <div class="card-body small text-muted">
+        Тут ти можеш змінити ім'я, біо, аватар та інші деталі. Після підключення бекенду форма робить реальний POST і зберігає дані.
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // find file input (rendered by Django as input[name="avatar"])
+  const avatarInput = document.querySelector('input[name="avatar"]');
+  const avatarPreview = document.getElementById('avatar-preview');
+  const btnSave = document.getElementById('btn-save-profile');
+  const feedback = document.getElementById('save-feedback');
+
+  if (avatarInput) {
+    avatarInput.addEventListener('change', function (e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = function (ev) {
+        avatarPreview.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // client-side check on submit: ensure username length >=2
+  const form = document.getElementById('profile-edit-form');
+  form && form.addEventListener('submit', function (e) {
+    const usernameInput = document.querySelector('input[name="username"]');
+    if (!usernameInput) return;
+    const fullName = usernameInput.value.trim();
+    if (fullName.length < 2) {
+      e.preventDefault();
+      alert('Логін має бути мінімум 2 символи.');
+      return false;
+    }
+    btnSave.disabled = true;
+    btnSave.innerText = 'Зачекай...';
+    feedback.style.display = 'block';
+    // allow normal POST -> server will redirect back to profile
+  });
+});
+</script>
+{% endblock %}

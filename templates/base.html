@@ -1,0 +1,238 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}БочкаМеду{% endblock %}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+
+  <!--htmx -->
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"></script>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="{% static '/favicon/favicon-96x96.png' %}" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="{% static '/favicon.svg' %}" />
+  <link rel="shortcut icon" href="{% static '/favicon/favicon.ico' %}" />
+  <link rel="apple-touch-icon" sizes="180x180" href="{% static '/favicon/apple-touch-icon.png' %}" />
+  <meta name="apple-mobile-web-app-title" content="BarrelOfHoney" />
+  <link rel="manifest" href="{% static '/favicon/site.webmanifest' %}" />
+</head>
+
+
+<body class="theme-light">
+
+{% comment %} <div class="container mt-2">
+  <small class="text-muted">DEBUG user: {{ request.user }} — is_authenticated: {{ request.user.is_authenticated }}</small>
+</div> {% endcomment %}
+
+<!-- Header / Navbar -->
+<header class="sticky-top shadow-sm">
+  <nav class="navbar navbar-expand-lg">
+    <div class="container">
+      <!-- Лого -->
+      <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'index' %}">
+        <img src="{% static 'img/logo-header.png' %}" alt="logo" width="32" height="32" class="d-inline-block">
+        <span class="fw-bold">Бочка Меду</span>
+      </a>
+
+      <form class="d-flex" method="get" action="{% url 'index' %}">
+          <input class="form-control me-2" name="q" type="search" placeholder="Пошук тем або постів..." aria-label="Search" value="{{ request.GET.q|default_if_none:'' }}">
+          <button class="btn btn-primary" type="submit">Знайти</button>
+      </form>
+
+      <!-- Посилання -->
+      <div class="d-none d-lg-flex align-items-center ms-auto">
+        <ul class="navbar-nav me-3">
+          <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Головна</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'categories' %}">Категорії</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'about' %}">Про</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'faq' %}">ЧаПи</a></li>
+        </ul>
+
+        <!-- Зміна теми -->
+        <button id="theme-toggle" class="btn btn-sm btn-outline-primary me-2" type="button" aria-label="Toggle theme">🌓</button>
+
+        <!-- Авторизація -->
+        {% if request.user.is_authenticated %}
+          <div class="d-flex align-items-center gap-2">
+            <a href="{% url 'profile_view' request.user.username %}" class="d-flex align-items-center text-decoration-none text-reset">
+              {% if request.user.profile.avatar %}
+                <img src="{{ request.user.profile.avatar.url }}" alt="avatar" class="rounded-circle" width="32" height="32">
+              {% else %}
+                <img src="{% static 'img/avatar-placeholder.png' %}" alt="avatar" class="rounded-circle" width="32" height="32">
+              {% endif %}
+              <span class="ms-2">{{ request.user.username }}</span>
+            </a>
+
+            <form method="post" action="{% url 'logout' %}" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-primary btn-sm">Вийти</button>
+            </form>
+          </div>
+        {% else %}
+          <div class="d-flex gap-2">
+            <a class="btn btn-outline-primary btn-sm" href="{% url 'login' %}">Увійти</a>
+            <a class="btn btn-primary btn-sm" href="{% url 'register' %}">Реєстрація</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <button class="btn btn-outline-secondary d-lg-none ms-auto" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNav" aria-controls="mobileNav" aria-label="Відкрити меню">
+        <i class="bi-list" aria-hidden="true"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+
+<!-- offcanvas для мобільного меню -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="mobileNav" aria-labelledby="mobileNavLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="mobileNavLabel">
+      <img src="{% static 'img/logo-header.png' %}" alt="logo" width="28" height="28" class="me-2"> Бочка Меду
+    </h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрити"></button>
+  </div>
+  <div class="offcanvas-body d-flex flex-column">
+    <form class="mb-3" role="search" onsubmit="return false;">
+      <div class="input-group">
+        <input class="form-control" type="search" placeholder="Пошук..." aria-label="Search">
+        <button class="btn btn-outline-secondary" type="submit"><i class="bi-search"></i></button>
+      </div>
+    </form>
+
+    <!-- main nav -->
+    <ul class="nav nav-pills flex-column mb-3">
+      <li class="nav-item"><a class="nav-link" href="{% url 'index' %}"><i class="bi-house me-2"></i>Головна</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'categories' %}"><i class="bi-list-columns me-2"></i>Категорії</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'new_thread' %}"><i class="bi-plus-circle me-2"></i>Нова тема</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'profile' %}"><i class="bi-person me-2"></i>Профіль</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'about' %}"><i class="bi-info-circle me-2"></i>Про</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'rules' %}"><i class="bi-shield-lock me-2"></i>Правила</a></li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'faq' %}"><i class="bi-question-circle me-2"></i>ЧаПи</a></li>
+    </ul>
+
+    <div class="mt-auto">
+      <div class="d-grid gap-2 mb-2">
+        <a class="btn btn-primary" href="{% url 'login' %}">Увійти</a>
+        <a class="btn btn-outline-secondary" href="{% url 'register' %}">Реєстрація</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" />
+<section class="hero-bg">
+  <div class="hero-overlay"></div>
+  <div class="hero-swiper swiper-container">
+    <div class="swiper-wrapper">
+      {% if hero_backgrounds %}
+        {% for img in hero_backgrounds %}
+          <div class="swiper-slide" style="background-image:url('{% static img %}');" data-slide-index="{{ forloop.counter0 }}">
+            <div class="hero-content container">
+              <h1 class="display-5">Форум для обговорення ігор</h1>
+              <p class="lead">Новини, гайди, стріми та все, що цікавить геймерів — обговорюй, ділись і знаходь команду.</p>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="swiper-slide" style="background-image:url('{% static "img/hero/game-bg.png" %}');">
+          <div class="hero-content container">
+            <h1 class="display-5">Форум для обговорення ігор</h1>
+            <p class="lead">Новини, гайди, стріми та все, що цікавить геймерів.</p>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+
+
+<!-- Main -->
+<main class="container py-4">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- Footer -->
+<footer class="border-top mt-4">
+  <div class="container py-3 text-center small text-muted">
+    © 2025 Форум Бочка меду | Юрій Лапін | група ПП-23 | навчальний проєкт.
+  </div>
+</footer>
+
+<!-- HTMX loader -->
+<div id="htmx-loader" style="display:none; position:fixed; top:20px; right:20px; z-index:2000;">
+  <div class="spinner-border text-primary"></div>
+</div>
+
+<script>
+  document.body.addEventListener('htmx:request', () => document.getElementById('htmx-loader').style.display = 'block');
+  document.body.addEventListener('htmx:afterOnLoad', () => document.getElementById('htmx-loader').style.display = 'none');
+  document.body.addEventListener('htmx:responseError', () => document.getElementById('htmx-loader').style.display = 'none');
+</script>
+
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Site JS -->
+<script src="{% static 'js/site.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const mode = "{{ hero_mode|default:'rotate' }}";
+  const selected = {{ hero_selected|default:"0" }};
+  const autoplayDelay = {{ hero_autoplay_delay|default:6000 }};
+  const fadeSpeed = {{ hero_fade_speed|default:800 }};
+
+  const slides = document.querySelectorAll('.hero-swiper .swiper-slide');
+  if (!slides || slides.length === 0) return;
+
+  if (mode === 'random') {
+    slides.forEach((s, i) => {
+      if (i == selected) {
+        s.style.display = 'flex';
+      } else {
+        s.style.display = 'none';
+      }
+    });
+    return;
+  }
+
+  const swiper = new Swiper('.hero-swiper', {
+    loop: true,
+    effect: 'fade',
+    speed: fadeSpeed,
+    autoplay: {
+      delay: autoplayDelay,
+      disableOnInteraction: false,
+    },
+    pagination: {
+      el: '.swiper-pagination',
+      clickable: true,
+    },
+    navigation: {
+      nextEl: '.swiper-button-next',
+      prevEl: '.swiper-button-prev',
+    },
+    initialSlide: Number(selected || 0),
+  });
+});
+</script>
+
+</body>
+</html>

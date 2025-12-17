@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Про проект — {{ site_info.title|default:"БочкаМеду" }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center fade-in">
+  <div class="col-lg-10">
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h1 class="h4 mb-2">Про проект — {{ site_info.title|default:"БочкаМеду" }}</h1>
+        <p class="text-muted mb-3">{{ site_info.summary|default:"Міні-форум для навчального проєкту." }}</p>
+
+        <div class="row">
+          <!-- Про розробника -->
+          <div class="col-md-5 mb-3">
+            <div class="card h-100">
+              <div class="card-body text-center">
+                {% if developer.photo %}
+                  <img src="{{ developer.photo }}" alt="{{ developer.name }}" class="rounded-circle mb-3" width="140" height="140" style="object-fit:cover;">
+                {% else %}
+                  <img src="{% static 'img/dev/photo-placeholder.jpg' %}" alt="developer" class="rounded-circle mb-3" width="140" height="140" style="object-fit:cover;">
+                {% endif %}
+
+                <h5 class="mb-0">{{ developer.name|default:"Ім'я Розробника" }}</h5>
+                <div class="small text-muted mb-2">{{ developer.role|default:"Роль / навчання" }}</div>
+                <p class="small text-muted mb-2">{{ developer.location|default:"Місце навчання/роботи" }}</p>
+
+                <p class="mb-2"><a href="mailto:{{ developer.email }}">{{ developer.email }}</a></p>
+
+                <hr>
+
+                <h6 class="fw-semibold">Цікаві факти</h6>
+                <ul class="text-start small">
+                  {% for f in developer.facts %}
+                    <li>{{ f }}</li>
+                  {% empty %}
+                    <li>Тут будуть цікаві факти про розробника.</li>
+                  {% endfor %}
+                </ul>
+
+                <div class="mt-3">
+                  {% if developer.social.github %}
+                    <a href="{{ developer.social.github }}" class="btn btn-outline-dark btn-sm me-1" target="_blank" rel="noopener">GitHub</a>
+                  {% endif %}
+                  {% if developer.social.linkedin %}
+                    <a href="{{ developer.social.linkedin }}" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">LinkedIn</a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Про сайт -->
+          <div class="col-md-7 mb-3">
+            <div class="card h-100">
+              <div class="card-body">
+                <h5 class="mb-2">Про сайт</h5>
+                <p class="small text-muted">
+                  Проєкт створено як самостійну навчальну роботу з дисципліни «Технології веб розробки та дизайну» з метою практичного опанування фронтенд та бекенд інтеграції.
+                </p>
+
+                <h6 class="mt-3">Використані технології</h6>
+                <ul class="small">
+                  {% for tech in site_info.technologies %}
+                    <li>{{ tech }}</li>
+                  {% endfor %}
+                </ul>
+
+                <h6 class="mt-3">Ключові можливості</h6>
+                <ul class="small">
+                  {% for feat in site_info.features %}
+                    <li>{{ feat }}</li>
+                  {% endfor %}
+                </ul>
+
+                <h6 class="mt-3">Репозиторій</h6>
+                <p class="small">
+                  Код доступний на GitHub (скоро буде доступний):
+                  {% if site_info.github %}
+                    <a href="{{ site_info.github }}" target="_blank" rel="noopener">{{ site_info.github }}</a>
+                  {% else %}
+                    <span class="text-muted">Посилання не вказане.</span>
+                  {% endif %}
+                </p>
+
+                <div class="mt-3 small text-muted">Ліцензія: {{ site_info.license|default:"MIT" }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {% comment %} <hr>
+        <p class="small text-muted mb-0">Цю сторінку можна доповнити інформацією про хостинг, CI/CD, README, або FAQ для розробників.</p> {% endcomment %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

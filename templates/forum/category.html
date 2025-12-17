@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}{{ category.title|default:"Категорія" }} — БочкаМеду{% endblock %}
+
+{% block content %}
+<div class="row gx-4">
+  <div class="col-lg-8">
+    <!-- Breadcrumb / Title -->
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'index' %}">Головна</a></li>
+        <li class="breadcrumb-item active" aria-current="page">
+            {{ category.title|default:"Розділ" }}
+        </li>
+      </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <div>
+        <h1 class="h3 mb-1">{{ category.title|default:"Розділ: Розробка" }}</h1>
+        <p class="text-muted mb-0">{{ category.description|default:"Опис категорії відсутній." }}</p>
+      </div>
+      <div class="text-end">
+        <a href="{% url 'new_thread' %}" class="btn btn-primary">Нова тема</a>
+      </div>
+    </div>
+
+    <!-- Threads list -->
+    <div class="list-group">
+      {% if threads %}
+        {% for t in threads %}
+          {# use non-anchor container + stretched-link to avoid nested anchors #}
+          <div class="list-group-item list-group-item-action mb-2 shadow-sm fade-in neon-hover position-relative card-level-1">
+            {# stretched link for whole-item clickability #}
+            {% comment %} <a href="{{ t.get_absolute_url }}" class="stretched-link">фффф</a> {% endcomment %}
+
+            <div class="d-flex w-100 justify-content-between align-items-start">
+              <div class="me-3">
+                <a href="{{ t.get_absolute_url }}" class="stretched-link"><div class="fw-bold h6 mb-1">{{ t.title }}</div></a>
+                
+                <div class="small text-muted">
+                  Автор:
+                  {% if t.author and t.author.username %}
+                    <a href="{% url 'profile_view' t.author.username %}">{{ t.author.get_full_name|default:t.author.username }}</a>
+                  {% elif t.author %}
+                    {{ t.author.get_full_name|default:"Невідомий" }}
+                  {% else %}
+                    <span class="text-muted">Анонім</span>
+                  {% endif %}
+                  • {{ t.updated_at|naturaltime }}
+                </div>
+              </div>
+
+              <div class="text-end small">
+                <div>💬 {{ t.posts_count }}</div>
+                <div>👀 {{ t.views }}</div>
+              </div>
+            </div>
+
+            <div class="mt-2 d-flex justify-content-between small text-muted">
+              <div>
+                {% with last_post=t.last_post %}
+                  {% if last_post %}
+                    Останній пост: <a href="{{ t.get_absolute_url }}#post-{{ last_post.pk }}">{{ last_post.author.get_full_name|default:last_post.author.username }}</a>
+                    • {{ last_post.created_at|naturaltime }}
+                  {% else %}
+                    Немає відповідей
+                  {% endif %}
+                {% endwith %}
+              </div>
+
+              <div>
+                {% if t.pinned %}<span class="badge bg-warning text-dark me-1">Pinned</span>{% endif %}
+                {% if t.closed %}<span class="badge bg-secondary">Closed</span>{% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+
+        <!-- pagination -->
+        <nav aria-label="threads pagination" class="mt-3">
+          <ul class="pagination justify-content-center">
+            {% if threads.has_previous %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ threads.previous_page_number }}" aria-label="previous">&larr;</a>
+              </li>
+            {% endif %}
+            <li class="page-item disabled"><span class="page-link">Сторінка {{ threads.number }} з {{ threads.paginator.num_pages }}</span></li>
+            {% if threads.has_next %}
+              <li class="page-item">
+                <a class="page-link" href="?page={{ threads.next_page_number }}" aria-label="next">&rarr;</a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+
+      {% else %}
+        <div class="card mb-3">
+          <div class="card-body text-muted">У цій категорії ще немає тем.</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="col-lg-4">
+    <div class="card mb-3 shadow-sm fade-in card-level-1">
+      <div class="card-header">Швидкі дії</div>
+      <div class="card-body">
+        <a href="{% url 'new_thread' %}" class="btn btn-primary w-100 mb-2">Створити тему</a>
+        {% comment %} {% if categories|length > 0 %}
+          <a href="{{ categories.0.get_absolute_url }}" class="btn btn-outline-primary w-100 mb-2">Інші теми — {{ categories.0.title }}</a>
+        {% else %}
+          <a href="{% url 'categories' %}" class="btn btn-outline-primary w-100 mb-2">Категорії</a>
+        {% endif %} {% endcomment %}
+        <a href="{% url 'categories' %}" class="btn btn-outline-primary w-100">Всі категорії</a>
+      </div>
+    </div>
+
+    <div class="card mb-3 shadow-sm fade-in card-level-1">
+      <div class="card-header">Топ-учасники</div>
+      <ul class="list-group list-group-flush">
+        {% for u in top_users %}
+          <li class="list-group-item small d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ u.get_full_name|default:u.username }}</strong>
+              <div class="small text-muted">@{{ u.username }}</div>
+            </div>
+            <span class="text-muted small">{{ u.posts_count }}</span>
+          </li>
+        {% empty %}
+          <li class="list-group-item small text-muted">Немає активних учасників.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="card mb-3 shadow-sm fade-in card-level-1">
+      <div class="card-body">
+        <h6>Віджет: Короткі поради</h6>
+        <p class="small text-muted">Пиши чітко, додавай приклади і перевіряй код перед публікацією.</p>
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}

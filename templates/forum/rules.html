@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Правила поведінки — БочкаМеду{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <h1 class="h4 mb-3">Правила поведінки</h1>
+
+    <div class="list-group">
+      {% for r in rules %}
+        <div class="list-group-item mb-2 shadow-sm">
+          <h5 class="mb-1">{{ r.title }}</h5>
+          <p class="mb-0 text-muted">{{ r.text }}</p>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-body small text-muted">
+        Порушення правил може призвести до видалення повідомлень або блокування акаунту (в майбутньому через адмінку).
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Головна — БочкаМеду{% endblock %}
+
+{% block content %}
+<div class="row gx-4">
+  <!-- main -->
+  <div class="col-lg-8">
+    <!-- Hero / Search -->
+    <div class="card mb-4 fade-in neon-hover">
+      <div class="card-body">
+        <h1 class="card-title">Вітання на на форумі БочкаМеду 👋</h1>
+        <!-- додатковий текст про форум -->
+        <p class="mb-2">
+          БочкаМеду — це дружній форум для обговорення відеоігор, стрімів, інді-проєктів і всього, що з ними пов'язано.
+          Ділися враженнями, став питання розробникам, знайомся з іншими гравцями, обговорюй тактики та новини ігор.
+        </p>
+        {% comment %} <p class="text-muted">Мале місце для великої розмови — обирай категорію або створи тему.</p> {% endcomment %}
+
+        <div class="mb-3 align-items-center">
+          <p>Останнє відео на каналі OldBoi</p>
+          <iframe width="100%" height="315" src="https://www.youtube.com/embed/EymCLJrr7w4?si=0KTUsFegt7LeZ2Js" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+
+        <div class="mt-3">
+          {% if user.is_authenticated %}
+            <a href="{% url 'new_thread' %}" class="btn btn-primary">Створити тему</a>
+          {% else %}
+            <a href="{% url 'login' %}?next={% url 'new_thread' %}" class="btn btn-outline-primary">Увійти, щоб створити тему</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Popular topics -->
+    <div class="mb-4">
+      <h4 class="mb-3">Популярні теми</h4>
+
+      <div class="list-group">
+        {% for t in popular_threads %}
+          <div class="list-group-item d-flex justify-content-between align-items-start topic-item mb-2 fade-in neon-hover">
+            <div class="ms-2 me-auto">
+              <div class="fw-bold">
+                <a href="{{ t.get_absolute_url }}" class="stretched-link text-decoration-none">{{ t.title }}</a>
+              </div>
+              <div class="small text-muted">
+                Категорія: <a href="{{ t.category.get_absolute_url }}">{{ t.category.title }}</a>
+                • автор: {{ t.author.username }}
+                • {{ t.updated_at|naturaltime }}
+              </div>
+            </div>
+            <div class="text-end small">
+              <div>💬 {{ t.posts_count }}</div>
+              <div>👀 {{ t.views }}</div>
+            </div>
+          </div>
+        {% empty %}
+          <div class="text-muted">Популярних тем ще немає.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Recent activity / recent posts -->
+    <div class="mb-4">
+      <h5 class="mb-3">Останні повідомлення</h5>
+
+      {% for p in recent_posts %}
+        <div class="card mb-2 fade-in neon-hover">
+          <div class="card-body">
+            <div class="d-flex align-items-start gap-3">
+              {% if p.author.profile.avatar %}
+                <img src="{{ p.author.profile.avatar.url }}" alt="avatar" class="rounded-circle" width="48" height="48">
+              {% else %}
+                <img src="{% static 'img/avatar-placeholder.png' %}" alt="avatar" class="rounded-circle" width="48" height="48">
+              {% endif %}
+              <div>
+                <div class="fw-bold">{{ p.author.username }} <span class="small text-muted">• {{ p.created_at|naturaltime }}</span></div>
+                <div class="mt-1">В темі <a href="{{ p.thread.get_absolute_url }}">{{ p.thread.title }}</a></div>
+                <div class="text-truncate small text-muted mt-1">{{ p.content|striptags|truncatechars:140 }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="card mb-2">
+          <div class="card-body text-muted">Постів ще немає.</div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- All threads (main feed) -->
+    <div class="mb-4">
+      <h5 class="mb-3">Усі теми</h5>
+
+      <div class="list-group">
+        {% for t in threads %}
+          <div class="list-group-item d-flex justify-content-between align-items-start mb-2 fade-in neon-hover">
+            <div class="ms-2 me-auto">
+              <div class="fw-bold">
+                <a href="{{ t.get_absolute_url }}" class="stretched-link text-decoration-none">{{ t.title }}</a>
+              </div>
+              <div class="small text-muted">
+                Категорія: <a href="{{ t.category.get_absolute_url }}">{{ t.category.title }}</a>
+                • {{ t.author.username }}
+                • {{ t.updated_at|naturaltime }}
+              </div>
+            </div>
+            <div class="text-end small">
+              <div>💬 {{ t.posts_count }}</div>
+              <div>👀 {{ t.views }}</div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+
+      <nav aria-label="threads pagination" class="mt-3">
+        <ul class="pagination">
+          {% if threads.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ threads.previous_page_number }}">←</a></li>
+          {% endif %}
+          <li class="page-item disabled"><span class="page-link">Сторінка {{ threads.number }} з {{ threads.paginator.num_pages }}</span></li>
+          {% if threads.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ threads.next_page_number }}">→</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+
+  </div>
+
+  <!-- sidebar -->
+  <aside class="col-lg-4">
+    <!-- Categories widget -->
+    <div class="card mb-3 fade-in neon-hover">
+      <div class="card-header">
+        Категорії
+      </div>
+      <ul class="list-group list-group-flush">
+        {% for c in categories %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <a href="{{ c.get_absolute_url }}">{{ c.title }}</a>
+            <span class="small text-muted"> {{ c.threads_count }} тем</span>
+          </li>
+        {% empty %}
+          <li class="list-group-item text-muted">Категорій немає.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- mini author card -->
+    <div class="card mb-3 text-center fade-in neon-hover">
+      <div class="card-body">
+        {% if user.is_authenticated %}
+          {% if user.profile.avatar %}
+            <img src="{{ user.profile.avatar.url }}" class="rounded-circle mb-2" width="80" height="80" alt="avatar">
+          {% else %}
+            <img src="{% static 'img/avatar-placeholder.png' %}" class="rounded-circle mb-2" width="80" height="80" alt="avatar">
+          {% endif %}
+          <h6 class="card-title mb-0">{{ user.get_full_name|default:user.username }}</h6>
+          <p class="text-muted small mb-2">@{{ user.username }}</p>
+          <a href="{% url 'profile' %}" class="btn btn-outline-primary btn-sm">Перейти у профіль</a>
+        {% else %}
+          <img src="{% static 'img/avatar-placeholder.png' %}" class="rounded-circle mb-2" width="80" height="80" alt="avatar">
+          <h6 class="card-title mb-0">Гість</h6>
+          <p class="text-muted small mb-2">Увійди або зареєструйся</p>
+          <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm mb">Увійти</a>
+          <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Реєстрація</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Users online widget -->
+    <div class="card mb-3 fade-in neon-hover">
+      <div class="card-body">
+        <h6>Користувачі онлайн <span class="small text-muted">({{ users_online_count }})</span></h6>
+        {% if users_online_count > 0 %}
+          <ul class="list-unstyled mb-0">
+            {% for u in users_online %}
+              <li class="d-flex align-items-center py-1">
+                {% if u.profile.avatar %}
+                  <img src="{{ u.profile.avatar.url }}" alt="avatar" width="36" height="36" class="rounded-circle me-2">
+                {% else %}
+                  <img src="{% static 'img/avatar-placeholder.png' %}" alt="avatar" width="36" height="36" class="rounded-circle me-2">
+                {% endif %}
+                <div>
+                  <div class="small fw-bold">{{ u.get_full_name|default:u.username }}</div>
+                  <div class="small text-muted">{{ u.username }} • {{ u.last_login|naturaltime }}</div>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="small text-muted">Наразі нікого немає онлайн (за last_login).</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- event timer -->
+    <div class="card mb-3 fade-in neon-hover">
+      <div class="card-body">
+        <h6>🎄 Таймер до Нового Року 🎄</h6>
+        <div id="countdown" class="h5">00:00:00</div>
+      </div>
+    </div>
+    
+    <div class="card mb-3 fade-in neon-hover">
+      <div class="card-body">
+        <p>Приєднуйся до нашого Дискорд сервера!</p>
+        <iframe src="https://discord.com/widget?id=804856048757899284&theme=dark" width="100%" height="500" allowtransparency="true" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
+      </div>
+    </div>
+
+
+    
+  </aside>
+</div>
+{% endblock %}

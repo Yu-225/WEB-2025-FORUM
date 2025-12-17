@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Увійти — БочкаМеду{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+    <div class="card mt-5 fade-in neon-hover">
+      <div class="card-body p-4">
+        <h3 class="card-title text-center mb-3">Увійти в БочкаМеду</h3>
+
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        {% if form.errors %}
+          <div class="alert alert-danger">
+            Будь ласка, виправте помилки в формі.
+            {% for field in form %}
+              {% for err in field.errors %}
+                <div>{{ err }}</div>
+              {% endfor %}
+            {% endfor %}
+            {% for err in form.non_field_errors %}
+              <div>{{ err }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form id="login-form" method="post" action="{% url 'login' %}" novalidate>
+          {% csrf_token %}
+
+          {# Optional next param support #}
+          {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+          {% elif request.GET.next %}
+            <input type="hidden" name="next" value="{{ request.GET.next }}">
+          {% endif %}
+
+          <div class="mb-3">
+            <label for="id_username" class="form-label">Логін або Email</label>
+            <input id="id_username" name="username" type="text" class="form-control" placeholder="username або email" required value="{{ request.POST.username }}">
+            <div class="invalid-feedback">Введи логін або email.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="id_password" class="form-label">Пароль</label>
+            <div class="input-group">
+              <input id="id_password" name="password" type="password" class="form-control" placeholder="Пароль" required>
+              <button id="toggle-pass" class="btn btn-outline-secondary" type="button" title="Показати/приховати пароль">👁</button>
+            </div>
+            <div class="invalid-feedback">Введи пароль.</div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="form-check">
+              <input id="id_remember" name="remember" type="checkbox" class="form-check-input">
+              <label for="id_remember" class="form-check-label small">Спробувати запам'ятати мене</label>
+            </div>
+            <a href="{% url 'password_reset' %}" class="small">Забули пароль?</a>
+          </div>
+
+          <div class="d-grid gap-2 mb-3">
+            <button id="btn-login" type="submit" class="btn btn-primary">Увійти</button>
+            <a href="{% url 'register' %}" class="btn btn-outline-secondary">Реєстрація</a>
+          </div>
+
+          <div class="text-center small text-muted mb-2">Або увійти через (поки що не працює)</div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-danger w-100">Google</button>
+            <button type="button" class="btn btn-outline-dark w-100">GitHub</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <p class="text-center small text-muted mt-3">Якщо ще не маєш акаунта — натисни «Реєстрація».</p>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('login-form');
+  const btn = document.getElementById('btn-login');
+  const loginInput = document.getElementById('id_username');
+  const passInput = document.getElementById('id_password');
+  const toggle = document.getElementById('toggle-pass');
+
+  toggle.addEventListener('click', () => {
+    passInput.type = passInput.type === 'password' ? 'text' : 'password';
+  });
+
+  // Progressive enhancement: client validation then submit
+  form.addEventListener('submit', function(e) {
+    // basic client validation: if invalid — prevent submit and show invalid-feedback
+    let valid = true;
+    if (!loginInput.value.trim()) {
+      loginInput.classList.add('is-invalid'); valid = false;
+    } else loginInput.classList.remove('is-invalid');
+
+    if (!passInput.value) {
+      passInput.classList.add('is-invalid'); valid = false;
+    } else passInput.classList.remove('is-invalid');
+
+    if (!valid) {
+      e.preventDefault();
+      return false;
+    }
+
+    // otherwise allow normal POST to server
+    btn.disabled = true;
+    btn.innerText = 'Зачекай...';
+  });
+});
+</script>
+{% endblock %}

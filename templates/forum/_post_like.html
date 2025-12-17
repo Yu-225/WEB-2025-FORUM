@@ -1,0 +1,12 @@
+<form
+  hx-post="{% url 'toggle_like' post.pk %}"
+  hx-swap="outerHTML"
+  class="d-inline"
+  method="post"
+>
+  {% csrf_token %}
+  <button type="submit" class="btn btn-sm btn-outline-primary" aria-pressed="{{ liked|yesno:'true,false' }}">
+    <span class="me-1">{% if liked %}❤️{% else %}🤍{% endif %}</span>
+    <span class="likes-count">{{ likes_count }}</span>
+  </button>
+</form>

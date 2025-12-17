@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Редагувати тему — БочкаМеду{% endblock %}
+
+{% block content %}
+<div class="row gx-4">
+  <div class="col-lg-8">
+    <nav aria-label="breadcrumb" class="mb-3">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'index' %}">Головна</a></li>
+        <li class="breadcrumb-item"><a href="{{ thread.category.get_absolute_url }}">{{ thread.category.title }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Редагувати тему</li>
+      </ol>
+    </nav>
+
+    <div class="card mb-4 fade-in neon-hover">
+      <div class="card-body">
+        <h4 class="card-title mb-3">Редагувати тему</h4>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {{ form.non_field_errors }}
+
+          <div class="mb-3">
+            <label class="form-label">Заголовок</label>
+            {{ form.title }}
+            {% if form.title.errors %}
+              <div class="invalid-feedback d-block">{{ form.title.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Категорія</label>
+            {{ form.category }}
+            {% if form.category.errors %}
+              <div class="invalid-feedback d-block">{{ form.category.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary" type="submit">Зберегти</button>
+            <a class="btn btn-outline-secondary" href="{{ thread.get_absolute_url }}">Назад</a>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

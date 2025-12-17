@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Реєстрація — БочкаМеду{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+    <div class="card mt-5 fade-in neon-hover">
+      <div class="card-body p-4">
+        <h3 class="card-title text-center mb-3">Створити акаунт</h3>
+
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} small">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger small">
+            {% for err in form.non_field_errors %}{{ err }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+          </div>
+        {% endif %}
+
+        <form id="register-form" method="post" action="{% url 'register' %}" novalidate>
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label for="id_username" class="form-label">Логін</label>
+            <input
+              id="id_username"
+              name="username"
+              type="text"
+              class="form-control {% if form.username.errors %}is-invalid{% endif %}"
+              placeholder="Логін (мін 3 символи)"
+              value="{{ form.username.value|default:'' }}"
+              required>
+
+            {% if form.username.errors %}
+              <div class="invalid-feedback">{{ form.username.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label for="id_email" class="form-label">Email</label>
+            <input
+              id="id_email"
+              name="email"
+              type="email"
+              class="form-control {% if form.email.errors %}is-invalid{% endif %}"
+              placeholder="you@example.com"
+              value="{{ form.email.value|default:'' }}"
+              required>
+
+            {% if form.email.errors %}
+              <div class="invalid-feedback">{{ form.email.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label for="id_password1" class="form-label">Пароль</label>
+            <input id="id_password1" name="password1" type="password"
+                   class="form-control {% if form.password1.errors %}is-invalid{% endif %}"
+                   placeholder="Пароль (мін 6 символів)" required>
+            {% if form.password1.errors %}
+              <div class="invalid-feedback">{{ form.password1.errors.0 }}</div>
+            {% else %}
+              <div class="form-text small">Пароль має бути не менше 6 символів.</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label for="id_password2" class="form-label">Підтвердження пароля</label>
+            <input id="id_password2" name="password2" type="password"
+                   class="form-control {% if form.password2.errors %}is-invalid{% endif %}"
+                   placeholder="Повторіть пароль" required>
+            {% if form.password2.errors %}
+              <div class="invalid-feedback">{{ form.password2.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3 form-check">
+            <input id="id_agree" type="checkbox" class="form-check-input" checked>
+            <label for="id_agree" class="form-check-label small">Погоджуюсь з правилами сервісу</label>
+          </div>
+
+          <div class="d-grid gap-2 mb-3">
+            <button id="btn-register" type="submit" class="btn btn-primary">Створити акаунт</button>
+            <a href="{% url 'login' %}" class="btn btn-outline-primary">До входу</a>
+          </div>
+
+          <div id="register-feedback" style="display:none;">
+            <div class="alert alert-success small">Акаунт створено. Переадресація…</div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% comment %} <p class="text-center small text-muted mt-3">Реєстрація: після підключення бекенду форма створює користувача і логінить його.</p> {% endcomment %}
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('register-form');
+  const btn = document.getElementById('btn-register');
+  const username = document.getElementById('id_username');
+  const email = document.getElementById('id_email');
+  const pw1 = document.getElementById('id_password1');
+  const pw2 = document.getElementById('id_password2');
+  const agree = document.getElementById('id_agree');
+  const feedback = document.getElementById('register-feedback');
+
+  function validateEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+  form.addEventListener('submit', function(e) {
+    let hasError = false;
+    username.classList.remove('is-invalid'); email.classList.remove('is-invalid');
+    pw1.classList.remove('is-invalid'); pw2.classList.remove('is-invalid');
+
+    if (!username.value || username.value.trim().length < 3) { username.classList.add('is-invalid'); hasError = true; }
+    if (!validateEmail(email.value.trim())) { email.classList.add('is-invalid'); hasError = true; }
+    if (!pw1.value || pw1.value.length < 6) { pw1.classList.add('is-invalid'); hasError = true; }
+    if (pw1.value !== pw2.value) { pw2.classList.add('is-invalid'); hasError = true; }
+    if (!agree.checked) { alert('Потрібно погодитись з правилами сервісу.'); hasError = true; }
+
+    if (hasError) { e.preventDefault(); return false; }
+
+    btn.disabled = true;
+    btn.innerText = 'Зачекай...';
+    feedback.style.display = 'block';
+  });
+});
+</script>
+{% endblock %}

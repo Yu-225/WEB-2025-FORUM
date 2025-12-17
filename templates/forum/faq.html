@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}ЧаПи — БочкаМеду{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center fade-in">
+  <div class="col-lg-10">
+    <h1 class="h4 mb-3">Поширені питання — ЧаПи</h1>
+
+    <div class="accordion" id="faqAccordion">
+      {% for f in faqs %}
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+          <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="{{ forloop.first|yesno:'true,false' }}" aria-controls="collapse{{ forloop.counter }}">
+            {{ f.q }}
+          </button>
+        </h2>
+        <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#faqAccordion">
+          <div class="accordion-body">
+            {{ f.a }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="mt-4 small text-muted">
+      Якщо не знайшли відповіді — створіть тему в категорії "Загальні" або напишіть адміну.
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{# partial post fragment: forum/_post.html #}
+{% load static humanize %}
+
+<div id="post-{{ p.pk }}" class="card mb-3 shadow-sm fade-in neon-hover" {% if is_new %} data-new-post="true" data-last-page="{{ last_page }}" data-post-id="{{ p.pk }}" {% endif %}>
+  <div class="card-body d-flex gap-3">
+    <div class="flex-shrink-0">
+      {% if p.author.profile.avatar %}
+        <img src="{{ p.author.profile.avatar.url }}" alt="avatar" class="rounded-circle" width="56" height="56">
+      {% else %}
+        <img src="{% static 'img/avatar-placeholder.png' %}" alt="avatar" class="rounded-circle" width="56" height="56">
+      {% endif %}
+    </div>
+
+    <div class="w-100">
+      <div class="d-flex justify-content-between">
+        <div>
+          <a href="{% url 'profile_view' p.author.username %}" class="h6 mb-0">{{ p.author.get_full_name|default:p.author.username }}</a>
+          <div class="small text-muted">@{{ p.author.username }} • {{ p.created_at|naturaltime }}</div>
+        </div>
+
+
+        <div class="post-actions mt-2">
+          {% if request_user.is_authenticated %}
+            {% include "forum/_post_like.html" with post=p liked=p.liked likes_count=p.likes_count %}
+          {% else %}
+            <div class="small text-muted">Лайків: {{ p.likes_count }}</div>
+          {% endif %}
+          {% if p.can_edit %}
+            <a href="{% url 'edit_post' p.pk %}" class="btn btn-sm btn-outline-primary">Редагувати</a>
+          {% endif %}
+        </div>
+
+      </div>
+
+      <hr class="my-2">
+
+      {# пост контент (безпечний HTML з бекенду) #}
+      <div class="post-content">
+        {{ p.content|safe }}
+      </div>
+    </div>
+  </div>
+</div>
