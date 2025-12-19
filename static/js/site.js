@@ -74,4 +74,24 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   })();
   // Перемикання теми
+
+
+
+  document.addEventListener("DOMContentLoaded", () => {
+  const banner = document.getElementById("cookie-banner");
+  const acceptBtn = document.getElementById("cookie-accept");
+
+  if (!banner || !acceptBtn) return;
+
+  if (!document.cookie.includes("cookie_consent=true")) {
+    banner.style.display = "block";
+  }
+
+  acceptBtn.addEventListener("click", () => {
+    // document.cookie = "cookie_consent=true; max-age=" + 60 * 60 * 24 * 365 + "; path=/";
+    document.cookie = "cookie_consent=true; max-age=" + 60 + "; path=/";
+    banner.style.display = "none";
+  });
+});
+
 });

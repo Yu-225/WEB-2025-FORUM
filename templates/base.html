@@ -146,7 +146,7 @@ if ('serviceWorker' in navigator) {
 </div>
 
 
-
+{% block hero %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.css" />
 <section class="hero-bg">
   <div class="hero-overlay"></div>
@@ -173,6 +173,7 @@ if ('serviceWorker' in navigator) {
   </div>
 </section>
 <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
+{% endblock %}
 
 
 <!-- Main -->
@@ -191,6 +192,32 @@ if ('serviceWorker' in navigator) {
 <div id="htmx-loader" style="display:none; position:fixed; top:20px; right:20px; z-index:2000;">
   <div class="spinner-border text-primary"></div>
 </div>
+
+
+
+<div id="cookie-banner"
+     class="position-fixed bottom-0 start-0 w-100 p-3 bg-dark text-light"
+     style="display:none; z-index: 2000;">
+  <div class="container d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+    <div class="small">
+      Ми використовуємо файли печивка
+    </div>
+    <button id="cookie-accept" class="btn btn-primary btn-sm">
+      Приймаю
+    </button>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
 
 <script>
   document.body.addEventListener('htmx:request', () => document.getElementById('htmx-loader').style.display = 'block');

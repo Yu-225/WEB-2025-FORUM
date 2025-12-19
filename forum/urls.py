@@ -3,6 +3,9 @@ from django.urls import include, path
 from django.contrib.auth import views as auth_views
 from . import views
 
+
+handler404 = "forum.views.custom_404"
+
 urlpatterns = [
     path('', views.index, name='index'),
     

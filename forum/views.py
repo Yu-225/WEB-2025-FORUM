@@ -94,6 +94,8 @@ def index(request):
     
     return render(request, 'forum/index.html', context)
 
+def custom_404(request, exception):
+    return render(request, "errors/404.html", status=404)
 
 
 def category_page(request, slug):
